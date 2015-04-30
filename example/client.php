@@ -1,2 +1,2 @@
 <?php
-require_once '../Aphplication/Client.php';
+require_once '../Aphplication/Client-CLI.php';
