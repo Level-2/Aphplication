@@ -43,6 +43,7 @@ class Server {
 				//Remove previously sent headers
 				header_remove();
 				msg_receive($this->queue, $msgid, $msgtype, 1024*50, $message, true);				
+				if ($message == 'shutdown') exit();
 				list($id, $data) = $message;
 
 				$output = $this->application->accept($msgid, $data['sessionId'], $data['get'], $data['post'], $data['server'], $data['files'], $data['cookie']);
@@ -60,5 +61,13 @@ class Server {
 		for ($i = 0; $i < $this->numThreads*2; $i++) {
 			$this->createFork(100+$i, 0);
 		}
+	}
+
+	public function shutdown() {
+		$this->queue = msg_get_queue(ftok($this->file, 'R'),0777);
+		for ($i = 0; $i < $this->numThreads*2; $i++) {
+			msg_send($this->queue, 100+$i, 'shutdown');
+		}
+		
 	}
 }

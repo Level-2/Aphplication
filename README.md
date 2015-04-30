@@ -9,14 +9,14 @@ Aphplication requires a linux server with the sysvmsg.so extension enabled. This
 
 ### Usage
 
-1) Create your server by creating a class that implements the Aphplication\Aphplication interfae
+1) Create your server by creating a class that implements the Aphplication\Aphplication interface
 
 2) Pass an instance of this class to `Aphplication\Server()`;
 
 3) Save this as a file e.g. `example1-persistence.php` 
 
 ```php
-req
+
 class MyApplication implements \Aphplication\Aphplication {
 	private $num = 0;
 
@@ -33,7 +33,7 @@ $server->start();
 2) Start the application on the command line:
 
 ```
-php MyApplication.php
+php example1-persistence.php
 ```
 
 3) Run the CLI Client script from the same directory that the server was started from (Both the server and the client *must* be started from the same current working directory)
@@ -47,6 +47,15 @@ This will connect to the server and the state is maintained across requests!
 
 
 
+### Shutting down the server
+
+To shut down the server run the same script via command line with the stop command:
+
+```php
+php example1-persistence.php stop
+```
+
 ### Webservers 
 
 For a webserver use Aphplication/Client.php as your entry point and start the server via the command line from the directory Client.php resides in. The directory is used as the base of the application so that you can run multiple applications on the same server.
+

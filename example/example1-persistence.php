@@ -12,4 +12,5 @@ class MyApplication implements \Aphplication\Aphplication {
 }
 
 $server = new \Aphplication\Server(new MyApplication());
-$server->start();
+if (isset($argv[1]) && $argv[1] == 'stop') $server->shutdown();
+else $server->start();
