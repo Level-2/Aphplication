@@ -1,0 +1,20 @@
+{
+    "name": "level-2/aphplication",
+    "version": "1.0",
+    "description": "A PHP application server",
+    "license": "BSD-2-Clause",
+    "keywords": ["Application server"],
+    "minimum-stability": "dev",
+    "authors": [
+    	{
+    		"name": "Tom Butler",
+    		"email": "tom@r.je"
+    	}
+    ],
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "autoload": {
+    	"classmap": ["./"]
+    }
+}
