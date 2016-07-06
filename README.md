@@ -127,6 +127,19 @@ require_once '../Aphplication/Client-CLI.php';
 
 The supplied client code connects to the server, sends it the get/post/etc data from the current request and returns the response. This PHP file **is** run on every request so try to keep it light!
 
+Now if you visit `client.php` in your browser, you'll see the output from the server. In this case it will show a counter because each time the server is connected to, the `$num` variable is incremented by one.
+
+
+### Now what?
+
+Your server can do *anything a normal PHP script can do*. Once a `require` statement has been proceessd on the server, that file is required and won't be required again until the server is restarted!
+
+### Development
+
+This does make development more difficult as you have to restart the server each time. Future releases will have a development mode that doesn't actually launch the server but allows you to run clients as if it was (like a normal php script where everything is loaded each time).
+
+
+
 
 ## Performance
 
