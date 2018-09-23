@@ -25,11 +25,15 @@ Aphplication requires a linux server with the sysvmsg.so extension enabled. This
 3) Save this as a file e.g. `example1-persistence.php` 
 
 ```php
-
+//Thhis class is executed once and keeps running in the background
 class MyApplication implements \Aphplication\Aphplication {
+	// State that is maintained across reuqests. This is not serialised, it is kept-as is so can be
+	// Database connections, complex object graphs, etc
 	private $num = 0;
-
+	
+	// The accept method is executed on each request. Because this instance is already running, the superglobals are passed from the client
 	public function accept($appId, $sessionId, $get, $post, $server, $files, $cookie) {
+		// The only code that is run on each request. This 
 		$this->num++;
 		return $this->num;
 	}
@@ -39,13 +43,46 @@ $server = new \Aphplication\Server(new MyApplication());
 $server->start();
 ```
 
+The server will now run and the single `MyApplication` instance will be kept running in a PHP process on the server. Each time the client connects, the server's `accept` method is called and can do the specific processing for the page.
+
+Which allows you to do something like this:
+
+
+```php
+//Thhis class is executed once and keeps running in the background
+class MyApplication implements \Aphplication\Aphplication {
+	private $frameworkEntryPoint;
+	
+	public function __construct() {
+		// Instantiate the framework and store it in memory. This only happens once and is kept active on the server
+		$db = new PDO('...');
+		$this->frameworkEntryPoint = new MyFramework($db);
+	}
+	// The accept method is executed on each request. Because this instance is already running, the superglobals are passed from the client
+	public function accept($appId, $sessionId, $get, $post, $server, $files, $cookie) {
+		// Each time a client requests, route the request as normal
+		return $this->frameworkEntryPoint->route($server['REQUEST_URI']);
+	}
+}
+
+$server = new \Aphplication\Server(new MyApplication());
+$server->start();
+```
+
+
+By doing this, all your framework classes are only ever loaded once. This is even better than opcaching because not only are files only parsed once, the bootstrap code is only ever executed once.
+
 2) Start the application on the command line:
+
+Assuming your server is stored in `example1-persistence.php` start the app server:
 
 ```
 php example1-persistence.php
 ```
 
 3) Run the CLI Client script from the same directory that the server was started from (Both the server and the client *must* be started from the same current working directory)
+
+Now connect to the server from the client.
 
 ```
 php ../Aphplication/Client-CLI.php
