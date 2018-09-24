@@ -1,6 +1,33 @@
 # Aphplication - A lightweight php Application Server
 
 
+## PHP is slow by nature becauase everything is done on every request
+
+Normally  when you run a PHP script the following happens:
+
+1. The PHP interpreter loads the requested files
+2. The framework is bootstrapped
+3. Dependency Injection Container, ORM, etc configurations are loaded
+4. The database is connected to
+5. Any classes which are required are loaded via an autoloader
+6. The URL is routed to a method and result displayed
+
+The only thing that happens differently on each request is the final step. All the (non-trivial) work of boostrapping the application is done on every single request. Each time a page is viewed, the classes are loaded, the framework is 
+
+Aphplication is an attempt to solve this problem by changing the nature of the way PHP handles requests.
+
+What if we could take a snapshot of a PHP script at step 5, after everything is boostrapped and ready to handle the individual requests? This is how Aphplication works:
+
+1. All the framework bootstrapping is done (steps 1 - 5 above) but left running in a PHP process on the server.
+2. When someone visits a page, the request is forwarded to the server which is already boostrapped ready to handle the request. 
+
+The result is that each request will only perform step 6. [This gives a 2400% performance increase in Laravel](https://laracasts.com/discuss/channels/laravel/proof-of-concept-application-server-2400-laravel-startup-speed-increase)
+
+
+
+## Aphplication
+
+
 Aphplication is a PHP application server. This works in a similar way to Node.js, your application is aways running and when someone connects, they are connecting to the active application. This allows you to maintain state across requests and avoid a lot of the bootstrapping code that exists on each request.
 
 There are two parts to an Aphplication project:
@@ -25,7 +52,7 @@ Aphplication requires a linux server with the sysvmsg.so extension enabled. This
 3) Save this as a file e.g. `example1-persistence.php` 
 
 ```php
-//Thhis class is executed once and keeps running in the background
+//This class is executed once and keeps running in the background
 class MyApplication implements \Aphplication\Aphplication {
 	// State that is maintained across reuqests. This is not serialised, it is kept-as is so can be
 	// Database connections, complex object graphs, etc
@@ -49,7 +76,7 @@ Which allows you to do something like this:
 
 
 ```php
-//Thhis class is executed once and keeps running in the background
+//This class is executed once and keeps running in the background
 class MyApplication implements \Aphplication\Aphplication {
 	private $frameworkEntryPoint;
 	
