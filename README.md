@@ -5,23 +5,22 @@
 
 Normally  when you run a PHP script the following happens:
 
-1. The PHP interpreter loads the requested files
-2. The framework is bootstrapped
-3. Dependency Injection Container, ORM, etc configurations are loaded
-4. The database is connected to
-5. Any classes which are required are loaded via an autoloader
-6. The URL is routed to a method and result displayed
+![Without an app server](https://r.je/img/aphplication-without.png)
 
-The only thing that happens differently on each request is the final step. All the (non-trivial) work of boostrapping the application is done on every single request. Each time a page is viewed, the classes are loaded, the framework is 
+
+The only thing that happens differently on each request is the final step. All the (non-trivial) work of boostrapping the application is done on every single request. Each time a page is viewed, the classes are loaded, the framework is instantiated, database connected to, libraries configured. All of this hard work is done on every request.  Every time you visit a page all the config files are loaded and classes instantiated.  
+
 
 Aphplication is an attempt to solve this problem by changing the nature of the way PHP handles requests.
 
 What if we could take a snapshot of a PHP script at step 5, after everything is boostrapped and ready to handle the individual requests? This is how Aphplication works:
 
-1. All the framework bootstrapping is done (steps 1 - 5 above) but left running in a PHP process on the server.
-2. When someone visits a page, the request is forwarded to the server which is already boostrapped ready to handle the request. 
+![Without an app server](https://r.je/img/aphplication-with.png)
 
-The result is that each request will only perform step 6. [This gives a 2400% performance increase in Laravel](https://laracasts.com/discuss/channels/laravel/proof-of-concept-application-server-2400-laravel-startup-speed-increase)
+By using Aphplication, the code that is normally run on each request is run once and then listens for connections. You can effectively jump in to any part of a running PHP script.
+
+
+The result is that each request will only perform the tasks it needs. [This gives a 2400% performance increase in Laravel](https://laracasts.com/discuss/channels/laravel/proof-of-concept-application-server-2400-laravel-startup-speed-increase)
 
 
 
