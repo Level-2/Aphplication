@@ -5,10 +5,19 @@ class Client {
 	private $socket;
 	private $serverId;
 
-	public function __construct($serverId) {
-		$key = ftok(__DIR__ .'/queue', 'R');
-		$this->queue = msg_get_queue($key ,0777);
-		$this->serverId = $serverId;
+	public function __construct($id, $msgQueue = __DIR__ .'/queue') {
+		set_error_handler(function($id, $msg) {
+			throw new \Exception($msg);
+		});
+		try {
+
+			if (!file_exists($msgQueue)) throw new \Exception('No queue file exists, is the server running?');
+			$key = ftok($msgQueue, 'R');
+			$this->queue = msg_get_queue($key ,0777);
+		}
+		catch (\Exception $e) {
+			throw new \Exception('Could not connect to App server: ' . $e->getMessage());
+		}
 	}
 
 	public function sendMessage($data) {
@@ -17,7 +26,7 @@ class Client {
 
 		$message = [$id, $data];
 
-		msg_send($this->queue, $this->serverId, $message, true, false);	
+		msg_send($this->queue, 100 + rand(0, 23), $message, true, false);
 
 		msg_receive($this->queue, $id, $msgtype, 1000000, $msg, true);
 		foreach ($msg[0] as $header) header($header);
@@ -25,11 +34,7 @@ class Client {
 	}
 }
 
-session_start();
 
-if (!isset($_SESSION['__appserverId'])) {
-	$_SESSION['__appserverId'] = 100 + rand(0, 23);
-}
-$client = new Client($_SESSION['__appserverId']);
+$client = new Client(0);
 session_write_close();
-echo $client->sendMessage(['sessionId' => session_id(), 'get' => $_GET, 'post' => $_POST, 'server' => $_SERVER, 'files' => $_FILES, 'cookie' => $_COOKIE]);
+echo $client->sendMessage($GLOBALS);
