@@ -8,7 +8,7 @@ Normally  when you run a PHP script the following happens:
 ![Without an app server](https://r.je/img/aphplication-without.png)
 
 
-The only thing that happens differently on each request is the final step. All the (non-trivial) work of boostrapping the application is done on every single request. Each time a page is viewed, the classes are loaded, the framework is instantiated, database connected to, libraries configured. All of this hard work is done on every request.  Every time you visit a page all the config files are loaded and classes instantiated.  
+The only thing that happens differently on each request is the final step. All the (non-trivial) work of boostrapping the application is done on every single request. Each time a page is viewed, the classes are loaded, the framework is instantiated, database connected to, libraries configured. All of this hard work is done on every request.  Every time you visit a page all the config files are loaded and classes instantiated.
 
 
 Aphplication is an attempt to solve this problem by changing the nature of the way PHP handles requests.
@@ -48,7 +48,7 @@ Aphplication requires a linux server with the sysvmsg.so extension enabled. This
 
 2) Pass an instance of this class to `Aphplication\Server()`;
 
-3) Save this as a file e.g. `example1-persistence.php` 
+3) Save this as a file e.g. `example1-persistence.php`
 
 ```php
 //This class is executed once and keeps running in the background
@@ -56,10 +56,13 @@ class MyApplication implements \Aphplication\Aphplication {
 	// State that is maintained across reuqests. This is not serialised, it is kept-as is so can be
 	// Database connections, complex object graphs, etc
 	private $num = 0;
-	
+
 	// The accept method is executed on each request. Because this instance is already running, the superglobals are passed from the client
-	public function accept($appId, $sessionId, $get, $post, $server, $files, $cookie) {
-		// The only code that is run on each request. This 
+
+	//The return value is a string which is to be sent back to the client.
+	//Note: For better comatibility any header() calls are also sent back to the client
+	public function accept(): string {
+		// The only code that is run on each request. This
 		$this->num++;
 		return $this->num;
 	}
@@ -78,14 +81,18 @@ Which allows you to do something like this:
 //This class is executed once and keeps running in the background
 class MyApplication implements \Aphplication\Aphplication {
 	private $frameworkEntryPoint;
-	
+
 	public function __construct() {
 		// Instantiate the framework and store it in memory. This only happens once and is kept active on the server
 		$db = new PDO('...');
 		$this->frameworkEntryPoint = new MyFramework($db);
 	}
+
 	// The accept method is executed on each request. Because this instance is already running, the superglobals are passed from the client
-	public function accept($appId, $sessionId, $get, $post, $server, $files, $cookie) {
+
+	//The return value is a string which is to be sent back to the client.
+	//Note: For better comatibility any header() calls are also sent back to the client
+	public function accept(): string {
 		// Each time a client requests, route the request as normal
 		return $this->frameworkEntryPoint->route($server['REQUEST_URI']);
 	}
@@ -100,10 +107,10 @@ By doing this, all your framework classes are only ever loaded once. This is eve
 
 2) Start the application on the command line:
 
-Assuming your server is stored in `example1-persistence.php` start the app server:
+Assuming your server is stored in `server.php` start the app server:
 
 ```
-php example1-persistence.php
+php server.php
 ```
 
 3) Run the CLI Client script from the same directory that the server was started from (Both the server and the client *must* be started from the same current working directory)
@@ -111,11 +118,15 @@ php example1-persistence.php
 Now connect to the server from the client.
 
 ```
-php ../Aphplication/Client-CLI.php
+php ../Aphplication/Client.php
 
 ```
 
-This will connect to the server and the state is maintained across requests!
+To use a web server as a client simply create the PHP script:
+
+```php
+require '../Aphplication/Client.php';
+```
 
 
 
@@ -124,7 +135,7 @@ This will connect to the server and the state is maintained across requests!
 To shut down the server run the same script via command line with the stop command:
 
 ```php
-php example1-persistence.php stop
+php server stop
 ```
 
 ### Webserver example
@@ -140,19 +151,7 @@ class MyApplication implements \Aphplication\Aphplication {
 
 	private $num;
 
-	/*
-	The `accept` function takes several arguments:
-
-	$appId - a unique identifier for this thread
-	$sessionId - the users session id
-	$get - $_GET from the client
-	$post - $_POST from the client
-	$server - $_SERVER from the client
-	$files - $_FILES from the client
-	$cookie - $_COOKIE from the client
-	*/
-
-	public function accept($appId, $sessionId, $get, $post, $server, $files, $cookie) {
+	public function accept(): string {
 		$this->num++;
 
 		//return the response to send back to the browser, e.g. some HTML code
@@ -162,7 +161,7 @@ class MyApplication implements \Aphplication\Aphplication {
 }
 
 
-//Now create an instance of the server 
+//Now create an instance of the server
 $server = new \Aphplication\Server(new MyApplication());
 
 //Check argv to allow starting and stopping the server
@@ -183,10 +182,10 @@ Now that the server is running, create a `client.php` inside the `public_html` o
 `client.php` should contain only this code:
 
 ```php
-require_once '../Aphplication/Client-CLI.php';
+require '../Aphplication/Client.php';
 ```
 
-(Adjust the path to `Aphplication/Client.php` accordingly). You **could** use composer's autoloader for this, however it's not a good idea as composers autoload is a significant overhead for loading a single file. You'll get better perfomance just using `require` to include the supplied client code. 
+(Adjust the path to `Aphplication/Client.php` accordingly). You *could* use composer's autoloader for this, however it's not a good idea as composers autoload is a significant overhead for loading a single file. You'll get better perfomance just using `require` to include the supplied client code.
 
 The supplied client code connects to the server, sends it the get/post/etc data from the current request and returns the response. This PHP file **is** run on every request so try to keep it light!
 
@@ -206,7 +205,7 @@ This does make development more difficult as you have to restart the server each
 
 ## Performance
 
-Aphplication can be up to 1000% faster than a standard PHP script. When you run a Laravel, Wordpress or Zend project the PHP interpreter is executed and does a lot of work: Loading all the required.php files, connecting to the database and finally processing your request. With Aphplication, all that boostrapping code is done once, when the server starts. When someone connects they are connecting to the running application that's already done all that boostrapping work, the server then just processes the request and hands it off to the client. 
+Aphplication can be up to 1000% faster than a standard PHP script. When you run a Laravel, Wordpress or Zend project the PHP interpreter is executed and does a lot of work: Loading all the required.php files, connecting to the database and finally processing your request. With Aphplication, all that boostrapping code is done once, when the server starts. When someone connects they are connecting to the running application that's already done all that boostrapping work, the server then just processes the request and hands it off to the client.
 
 You can think of the Application server a bit like MySQL, it's always running and waiting to handle requests. When a request is made, it does some processing and returns the result. Unlike a traditional PHP script, it keeps running ready to handle the next request.
 
@@ -215,7 +214,7 @@ This gives Aphplication a huge performance beneifit over the traditional method 
 
 ### Multithreading
 
-Aphplication is multi-threaded. It will launch as many processes as you like. This should be up to 3x the number of cores (or virtual cores) your CPU has. This is because often PHP scripts pause (e.g. while waiting for MySQL to return some data). 
+Aphplication is multi-threaded. It will launch as many processes as you like. This should be up to 3x the number of cores (or virtual cores) your CPU has. This is because often PHP scripts pause (e.g. while waiting for MySQL to return some data).
 
 You can set the number of threads by using
 
