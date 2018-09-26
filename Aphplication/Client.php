@@ -6,11 +6,6 @@ class Client {
 	private $serverId;
 
 	public function __construct($msgQueue = __DIR__ .'/queue') {
-		set_error_handler(function($id, $msg) {
-			throw new \Exception($msg);
-		});
-
-
 		if (!file_exists($msgQueue)) throw new \Exception('No queue file exists, is the server running?');
 		$key = ftok($msgQueue, 'R');
 		$this->queue = msg_get_queue($key ,0777);
