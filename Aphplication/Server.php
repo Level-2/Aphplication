@@ -17,6 +17,7 @@ class Server {
 
 	public function start() {
 		set_time_limit(0);
+		ini_set('html_errors', true);
 
 		if (file_exists($this->file)) unlink($this->file);
 		file_put_contents($this->file, '');
@@ -25,6 +26,8 @@ class Server {
  		$this->listen();
 	}
 
+	//This function could be broken up or even moved to a Fork class but anything inside the while
+	//loop is run on every request. To maximise server performance it is kept as simple as possible. TODO: Benchmark, does this really matter?
 	private function createFork($i) {
 		$sessionName = session_name();
 		$pid = pcntl_fork();
@@ -46,26 +49,29 @@ class Server {
 				//$GLOBALS = $data; does not work, the superglobals $_GET etc are not set.
 				foreach ($data as $key => $val) $GLOBALS[$key] = $val;
 
-				//Update the session ID from the cookie
+				//If the browser sent a session cookie, use the supplied session ID
+				// If the browser did not specify a session ID, reset session id to null so PHP starts a new session if it's required
 				$sessionId = $data['_COOKIE'][$sessionName] ?? null;
-				if ($sessionId) {
-					session_id($sessionId);
-				}
-				// If there is no current session, generate a unique ID. If not, different requests will share the same session id. The script will use the last real ID even if it's a new user
-				else session_id(md5(uniqid()));
+				session_id($sessionId);
 
+				ob_start();
 				$output = $this->application->accept();
+				$output = ob_get_clean() . $output;
 
 				$headers = headers_list();
 				// If session_id() has changed since the page loaded, session_start() for a new session or session_regenerate_id() have been called and the cookie needs updating
 				if (session_id() !== $sessionId) {
 					$headers[] = 'Set-Cookie: '. $sessionName . '=' . session_id() . '; path=/';
 				}
+				//Send the output back to the client based on its ID
+				msg_send($this->queue, $id, [$headers, $output], true, true);
+
 				//If there is a session active, close it. Otherwise the session remains open and locked in this thread and cannot be opened in another one.
+				//This adds a slight performance overhead but most scripts to not explicitly close the session.
 				if (session_status() == \PHP_SESSION_ACTIVE) {
 					session_write_close();
 				}
-				msg_send($this->queue, $id, [$headers, $output], true, true);
+
 
 				//Force GC to prevent memory leaks! Without this, the process will grow and grow
 				gc_collect_cycles();
@@ -102,9 +108,11 @@ class Server {
 	private function print($text) {
 		// Use STDERR, if the server prints *anything* to STDOUT (e.g. echo), it causes errors any time php sets a header
 		ob_start();
+		ini_set('html_errors', false);
 		var_dump($text);
 
 		fwrite(STDERR, ob_get_clean() . "\n");
+		ini_set('html_errors', true);
 	}
 }
 

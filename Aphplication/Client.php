@@ -9,15 +9,12 @@ class Client {
 		set_error_handler(function($id, $msg) {
 			throw new \Exception($msg);
 		});
-		try {
 
-			if (!file_exists($msgQueue)) throw new \Exception('No queue file exists, is the server running?');
-			$key = ftok($msgQueue, 'R');
-			$this->queue = msg_get_queue($key ,0777);
-		}
-		catch (\Exception $e) {
-			throw new \Exception('Could not connect to App server: ' . $e->getMessage());
-		}
+
+		if (!file_exists($msgQueue)) throw new \Exception('No queue file exists, is the server running?');
+		$key = ftok($msgQueue, 'R');
+		$this->queue = msg_get_queue($key ,0777);
+
 	}
 
 	public function connect() {
