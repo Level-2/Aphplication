@@ -48,13 +48,14 @@ Aphplication requires a linux server with the sysvmsg.so extension enabled. This
 
 2) Pass an instance of this class to `Aphplication\Server()`;
 
-3) Save this as a file e.g. `example1-persistence.php`
+3) Save this as a file e.g. `server.php`
 
 ```php
 //This class is executed once and keeps running in the background
 class MyApplication implements \Aphplication\Aphplication {
 	// State that is maintained across reuqests. This is not serialised, it is kept-as is so can be
 	// Database connections, complex object graphs, etc
+	// Note: Each worker thread has a copy of this state by default
 	private $num = 0;
 
 	// The accept method is executed on each request. Because this instance is already running, the superglobals are passed from the client
@@ -62,7 +63,7 @@ class MyApplication implements \Aphplication\Aphplication {
 	//The return value is a string which is to be sent back to the client.
 	//Note: For better comatibility any header() calls are also sent back to the client
 	public function accept(): string {
-		// The only code that is run on each request. This
+		// The only code that is run on each request.
 		$this->num++;
 		return $this->num;
 	}
@@ -94,7 +95,7 @@ class MyApplication implements \Aphplication\Aphplication {
 	//Note: For better comatibility any header() calls are also sent back to the client
 	public function accept(): string {
 		// Each time a client requests, route the request as normal
-		return $this->frameworkEntryPoint->route($server['REQUEST_URI']);
+		return $this->frameworkEntryPoint->route($_SERVER['REQUEST_URI']);
 	}
 }
 
@@ -118,7 +119,9 @@ php server.php
 Now connect to the server from the client.
 
 ```
-php ../Aphplication/Client.php
+require '../Aphplication/Client.php';
+$client = new \Aphplication\Client();
+echo $client->connect();
 
 ```
 
@@ -126,6 +129,8 @@ To use a web server as a client simply create the PHP script:
 
 ```php
 require '../Aphplication/Client.php';
+$client = new \Aphplication\Client();
+echo $client->connect();
 ```
 
 
@@ -183,6 +188,8 @@ Now that the server is running, create a `client.php` inside the `public_html` o
 
 ```php
 require '../Aphplication/Client.php';
+$client = new \Aphplication\Client();
+echo $client->connect();
 ```
 
 (Adjust the path to `Aphplication/Client.php` accordingly). You *could* use composer's autoloader for this, however it's not a good idea as composers autoload is a significant overhead for loading a single file. You'll get better perfomance just using `require` to include the supplied client code.

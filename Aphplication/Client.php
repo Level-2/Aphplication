@@ -5,7 +5,7 @@ class Client {
 	private $socket;
 	private $serverId;
 
-	public function __construct($id, $msgQueue = __DIR__ .'/queue') {
+	public function __construct($msgQueue = __DIR__ .'/queue') {
 		set_error_handler(function($id, $msg) {
 			throw new \Exception($msg);
 		});
@@ -20,13 +20,12 @@ class Client {
 		}
 	}
 
-	public function sendMessage($data) {
-		//Generate a random ID for this request
+	public function connect() {
+		//Generate a unique ID for this client so that the server knows where to send the message back to
 		$id = rand();
+		$message = [$id, $GLOBALS];
 
-		$message = [$id, $data];
-
-		msg_send($this->queue, 100 + rand(0, 23), $message, true, false);
+		msg_send($this->queue, 100, $message, true, false);
 
 		msg_receive($this->queue, $id, $msgtype, 1000000, $msg, true);
 		foreach ($msg[0] as $header) header($header);
@@ -35,6 +34,3 @@ class Client {
 }
 
 
-$client = new Client(0);
-session_write_close();
-echo $client->sendMessage($GLOBALS);
