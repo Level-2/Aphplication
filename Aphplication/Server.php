@@ -28,7 +28,7 @@ class Server {
 
 	//This function could be broken up or even moved to a Fork class but anything inside the while
 	//loop is run on every request. To maximise server performance it is kept as simple as possible. TODO: Benchmark, does this really matter?
-	private function createFork($i) {
+	private function createFork() {
 		$sessionName = session_name();
 		$pid = pcntl_fork();
 		sleep(0.001);
@@ -71,8 +71,6 @@ class Server {
 				if (session_status() == \PHP_SESSION_ACTIVE) {
 					session_write_close();
 				}
-
-
 				//Force GC to prevent memory leaks! Without this, the process will grow and grow
 				gc_collect_cycles();
 			}
@@ -83,7 +81,7 @@ class Server {
 		//Use twice the number of available threads, some operations e.g. queries cause a wait where the cpu isn't being used
 		//By allowing twice the threads, concurrency is improved
 		for ($i = 0; $i < $this->numThreads*2; $i++) {
-			$this->createFork($i);
+			$this->createFork();
 			$this->print('Creating worker ' . $i);
 		}
 	}
@@ -98,7 +96,7 @@ class Server {
 
 		for ($i = 0; $i < $this->numThreads*4; $i++) {
 			//Send non-blocking shutdown request. Different threads will pick it up at different times.
-			msg_send($this->queue, 100, 'shutdown');
+			msg_send($this->queue, 100, 'shutdown', true, true);
 			sleep(0.01);
 		}
 		unlink($this->file);

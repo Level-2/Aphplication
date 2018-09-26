@@ -18,8 +18,7 @@ class Client {
 	}
 
 	public function connect() {
-		//Generate a unique ID for this client so that the server knows where to send the message back to
-		$id = rand();
+		$id = getmypid();
 		$message = [$id, $GLOBALS];
 
 		msg_send($this->queue, 100, $message, true, false);
