@@ -5,7 +5,6 @@ class Server {
 	private $file;
 	private $numThreads = 12;
 	private $application;
-	const MONITOR_ID = 8000;
 
 	public function __construct(Aphplication $application, $file = __DIR__ . '/queue') {
 		$this->file = $file;
@@ -22,10 +21,6 @@ class Server {
 		if (file_exists($this->file)) unlink($this->file);
 		file_put_contents($this->file, '');
 
-		$this->queue = msg_get_queue(ftok($this->file, 'R'), 0777);
-		msg_set_queue($this->queue, []);
-		msg_remove_queue($this->queue);
-
 		$this->queue = msg_get_queue(ftok($this->file, 'R'),0777);
  		$this->listen();
 	}
@@ -39,7 +34,6 @@ class Server {
 			while (true) {
 				//Remove previously sent headers
 				header_remove();
-
 
 				msg_receive($this->queue, 100, $msgtype, 1024*50, $message, true);
 				if ($message == 'shutdown') {
@@ -96,11 +90,11 @@ class Server {
 
 		$this->queue = msg_get_queue(ftok($this->file, 'R'),0777);
 
-		for ($i = 0; $i < $this->numThreads*2; $i++) {
-			msg_send($this->queue, 100+$i, 'shutdown');
+		for ($i = 0; $i < $this->numThreads*4; $i++) {
+			//Send non-blocking shutdown request. Different threads will pick it up at different times.
+			msg_send($this->queue, 100, 'shutdown');
+			sleep(0.01);
 		}
-		//Wait briefly before deleting the file to ensure that all threads have shutdown correctly.
-		sleep(0.5);
 		unlink($this->file);
 		$this->print('Shutdown: Complete');
 	}
