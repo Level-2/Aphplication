@@ -1,7 +1,7 @@
 # Aphplication - A lightweight php Application Server
 
 
-## PHP is slow by nature becauase everything is done on every request
+## PHP is slow by nature because everything is done on every request
 
 Normally  when you run a PHP script the following happens:
 
