@@ -1,5 +1,7 @@
 # Aphplication - A lightweight php Application Server
 
+## Translations
+* [Tiếng Việt](https://chungnguyen.xyz/posts/aphplication-may-chu-ung-dung-php-sieu-nhe) - [Nguyễn Trần Chung](https://github.com/nguyentranchung/Aphplication)
 
 ## PHP is slow by nature because everything is done on every request
 
@@ -51,7 +53,7 @@ Aphplication requires a linux server with the sysvmsg.so extension enabled. This
 3) Save this as a file e.g. `server.php`
 
 ```php
-//This class is executed once and keeps running in the background
+// This class is executed once and keeps running in the background
 class MyApplication implements \Aphplication\Aphplication {
 	// State that is maintained across reuqests. This is not serialised, it is kept-as is so can be
 	// Database connections, complex object graphs, etc
@@ -60,8 +62,8 @@ class MyApplication implements \Aphplication\Aphplication {
 
 	// The accept method is executed on each request. Because this instance is already running, the superglobals are passed from the client
 
-	//The return value is a string which is to be sent back to the client.
-	//Note: For better comatibility any header() calls are also sent back to the client
+	// The return value is a string which is to be sent back to the client.
+	// Note: For better comatibility any header() calls are also sent back to the client
 	public function accept(): string {
 		// The only code that is run on each request.
 		$this->num++;
@@ -79,7 +81,7 @@ Which allows you to do something like this:
 
 
 ```php
-//This class is executed once and keeps running in the background
+// This class is executed once and keeps running in the background
 class MyApplication implements \Aphplication\Aphplication {
 	private $frameworkEntryPoint;
 
@@ -91,8 +93,8 @@ class MyApplication implements \Aphplication\Aphplication {
 
 	// The accept method is executed on each request. Because this instance is already running, the superglobals are passed from the client
 
-	//The return value is a string which is to be sent back to the client.
-	//Note: For better comatibility any header() calls are also sent back to the client
+	// The return value is a string which is to be sent back to the client.
+	// Note: For better comatibility any header() calls are also sent back to the client
 	public function accept(): string {
 		// Each time a client requests, route the request as normal
 		return $this->frameworkEntryPoint->route($_SERVER['REQUEST_URI']);
@@ -110,7 +112,7 @@ By doing this, all your framework classes are only ever loaded once. This is eve
 
 Assuming your server is stored in `server.php` start the app server:
 
-```
+```bash
 php server.php
 ```
 
@@ -118,7 +120,7 @@ php server.php
 
 Now connect to the server from the client.
 
-```
+```php
 require '../Aphplication/Client.php';
 $client = new \Aphplication\Client();
 echo $client->connect();
@@ -139,7 +141,7 @@ echo $client->connect();
 
 To shut down the server run the same script via command line with the stop command:
 
-```php
+```bash
 php server stop
 ```
 
@@ -151,32 +153,32 @@ First create a web server, `server.php`. This does not need to be in a `public_h
 ```php
 require 'vendor/autoload.php';
 class MyApplication implements \Aphplication\Aphplication {
-	//Application state. This will be kept in memory when the application is closed
-	//This can even be MySQL connections and other resources
+	// Application state. This will be kept in memory when the application is closed
+	// This can even be MySQL connections and other resources
 
 	private $num;
 
 	public function accept(): string {
 		$this->num++;
 
-		//return the response to send back to the browser, e.g. some HTML code
+		// return the response to send back to the browser, e.g. some HTML code
 		return $this->num;
 	}
 
 }
 
 
-//Now create an instance of the server
+// Now create an instance of the server
 $server = new \Aphplication\Server(new MyApplication());
 
-//Check argv to allow starting and stopping the server
+// Check argv to allow starting and stopping the server
 if (isset($argv[1]) && $argv[1] == 'stop') $server->shutdown();
 else $server->start();
 ```
 
 Once the server has been written, start it using
 
-```
+```bash
 php server.php
 ```
 
@@ -216,7 +218,7 @@ Aphplication can be up to 1000% faster than a standard PHP script. When you run 
 
 You can think of the Application server a bit like MySQL, it's always running and waiting to handle requests. When a request is made, it does some processing and returns the result. Unlike a traditional PHP script, it keeps running ready to handle the next request.
 
-This gives Aphplication a huge performance beneifit over the traditional method of loading all the required files and making all the necessary connections on each request.
+This gives Aphplication a huge performance benefit over the traditional method of loading all the required files and making all the necessary connections on each request.
 
 
 ### Multithreading
